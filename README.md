@@ -1,6 +1,7 @@
-# Reproduce performance issue with tracing when using `Registry` and dynamic layers
+# tracing-bench
 
-This is a small program to reproduce a performance issue we noticed when dynamically changing tracing log layers.
+This is a small program to reproduce a performance issue we noticed when
+dynamically changing tracing log layers via a `Registry`.
 
 [Without dynamic layers](https://lightsandshapes.com/tracing-bench.svg)
 
