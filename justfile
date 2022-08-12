@@ -1,43 +1,40 @@
-out_stacks := "out.user_stacks"
-svg := "tracing-bench.svg"
-svg_registry := "tracing-bench.registry.svg"
+@_default:
+  just --list
 
-build:
+_build:
   cargo build --release --no-default-features
 
-build-registry:
+_build-registry:
   cargo build --release
 
-hyperfine:
+_hyperfine:
   hyperfine --shell=none --warmup 10 './target/release/tracing-bench -c 1000 -t 10'
 	
-test: build
-  just hyperfine
+# run hyperfine without dynamic log filters
+test: _build _hyperfine
 
-test-registry: build-registry
-  just hyperfine
+# run hyperfine with dynamic log filters
+test-registry: _build-registry _hyperfine
 
-clean-dtrace:
-  pfexec rm -f {{out_stacks}}
+_clean-dtrace file:
+  pfexec rm -f {{file}}
 
-dtrace: clean-dtrace
+_dtrace output: (_clean-dtrace output)
   pfexec dtrace -x ustackframes=100 -n \
       'profile-97 /pid == $target && arg1/ {@[ustack()] = count()}' \
       -c './target/release/tracing-bench -c 10000000 -t 2' \
-      -o {{out_stacks}}
+      -o {{output}}
 
-inferno OUTPUT:
-  rm -f {{svg}}
-  just dtrace
-  demangle < {{out_stacks}} \
+_clean-svg file:
+  rm -f {{file}}
+
+_inferno stacks output: (_clean-svg output) (_dtrace "out.user_stacks")
+  demangle < {{stacks}} \
     | inferno-collapse-dtrace \
-    | inferno-flamegraph > {{OUTPUT}}
+    | inferno-flamegraph > {{output}}
 
-flamegraph: build
-  just inferno {{svg}}
+# generate a flamegraph without dynamic log filters
+flamegraph: _build (_inferno "out.user_stacks" "tracing-bench.svg")
 
-
-flamegraph-registry: build-registry
-  just inferno {{svg_registry}}
-
-
+# generate a flamegraph with dynamic log filters
+flamegraph-registry: _build-registry (_inferno "out.user_stacks" "tracing-bench.registry.svg")
