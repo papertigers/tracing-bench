@@ -1,3 +1,7 @@
+out_stacks := "out.user_stacks"
+svg := "tracing-bench.svg"
+svg_registry := "tracing-bench.registry.svg"
+
 @_default:
   just --list
 
@@ -34,7 +38,7 @@ _inferno stacks output: (_clean-svg output) (_dtrace "out.user_stacks")
     | inferno-flamegraph > {{output}}
 
 # generate a flamegraph without dynamic log filters
-flamegraph: _build (_inferno "out.user_stacks" "tracing-bench.svg")
+flamegraph: _build (_inferno out_stacks svg)
 
 # generate a flamegraph with dynamic log filters
-flamegraph-registry: _build-registry (_inferno "out.user_stacks" "tracing-bench.registry.svg")
+flamegraph-registry: _build-registry (_inferno out_stacks svg_registry)
